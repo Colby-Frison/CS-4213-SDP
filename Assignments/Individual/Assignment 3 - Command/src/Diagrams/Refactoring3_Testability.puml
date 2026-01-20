@@ -1,0 +1,79 @@
+@startuml Refactoring3_Testability
+!theme plain
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+
+title Refactoring 3: Extract Service Layer for Testability
+
+package "Before Refactoring" {
+    class NoteController {
+        -NoteRepository repository
+        -NoteListView view
+        +createNote(String, String): void
+        +calculateWordCount(Note): int
+        +formatContent(Note): String
+        +checkDuplicateTitle(String): boolean
+        +saveNote(Note): void
+    }
+    
+    class NoteListView {
+        +displayNotes(List<Note>): void
+    }
+    
+    class NoteRepository {
+        +save(Note): void
+        +findAll(): List<Note>
+    }
+    
+    NoteController --> NoteRepository
+    NoteController --> NoteListView
+    
+    note right of NoteController
+        **Problem:**
+        Business logic mixed with
+        controller, making unit
+        testing difficult
+    end note
+}
+
+package "After Refactoring" {
+    class NoteController {
+        -NoteService service
+        -NoteListView view
+        +createNote(String, String): void
+        +handleUserAction(): void
+    }
+    
+    class NoteService {
+        -NoteRepository repository
+        +createNote(String, String): Note
+        +calculateWordCount(Note): int
+        +formatContent(Note): String
+        +checkDuplicateTitle(String): boolean
+        +saveNote(Note): void
+        +getAllNotes(): List<Note>
+    }
+    
+    class NoteListView {
+        +displayNotes(List<Note>): void
+    }
+    
+    class NoteRepository {
+        +save(Note): void
+        +findAll(): List<Note>
+    }
+    
+    NoteController --> NoteService : delegates to
+    NoteController --> NoteListView : updates
+    NoteService --> NoteRepository : uses
+    
+    note right of NoteService
+        **Solution:**
+        Business logic extracted
+        to service layer, can be
+        tested independently
+    end note
+}
+
+@enduml
+

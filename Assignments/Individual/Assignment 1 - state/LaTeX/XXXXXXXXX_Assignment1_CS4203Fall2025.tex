@@ -1,0 +1,419 @@
+\documentclass[12pt,letterpaper]{article}
+
+% Packages
+\usepackage[margin=1in]{geometry}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{enumitem}
+\usepackage[colorlinks=true, linkcolor=blue, urlcolor=blue, citecolor=blue]{hyperref}
+\usepackage[all]{hypcap}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\usepackage{amssymb}
+\usepackage{lastpage}
+
+% Header/Footer
+\pagestyle{fancy}
+\fancyhf{}
+\rhead{Assignment 1: State}
+\lhead{CS 4203 - Design Patterns}
+\rfoot{Page \thepage/\pageref*{LastPage}}
+\lfoot{Colby Frison \\ XXXXXXXXX}
+
+% Title formatting
+\title{\textbf{Assignment 1: State} \\ Software Design Patterns}
+\author{\textbf{Student ID:} XXXXXXXXX \\ \textbf{Name:} Colby Frison \\ \textbf{Course:} CS 4203 - Fall 2025}
+\date{October 5, 2025}
+
+\begin{document}
+
+\maketitle
+\thispagestyle{empty}
+
+\newpage
+
+\tableofcontents
+
+\newpage
+
+\section{Part A: System Architecture Breakdown}
+
+\subsection{Selected System: Online Shopping Platform}
+
+I have chosen to analyze an \textbf{Online Shopping Platform} similar to a simplified version of Amazon. This system allows shoppers to browse items, add them to a shopping cart, and complete purchases online. Sellers can list their items and manage inventory.\par
+
+\vspace{0.5cm}
+
+\textbf{Note on Controller Pattern:} The controller pattern is applied at the class design level (shown in Part C's Class Diagram with the ShoppingController), not at the high-level architecture/subsystem level described here in Part A. Part A focuses on the overall system structure and how major subsystems interact, while Part C shows how specific classes implement patterns like Controller and Expert within those subsystems.
+
+\subsection{Overall Architecture}
+
+The Online Shopping Platform follows a \textbf{Three-Tier Layered Architecture}:
+
+\begin{enumerate}
+    \item \textbf{Presentation Layer} - Handles all user interactions through web/mobile interfaces
+    \item \textbf{Business Logic Layer} - Contains the core application logic for item listings, inventory, pricing, and order processing
+    \item \textbf{Data Layer} - Manages persistent storage of items, sellers, shoppers, and orders in databases
+\end{enumerate}
+
+This layered approach keeps different parts of the system separate, where each layer handles its own job and only talks to the layers next to it. The presentation layer can't directly touch the database—it has to go through the business logic layer first, which makes sure all business rules are followed before any data gets changed.
+
+\subsection{Three Main Subsystems}
+
+\subsubsection{User Interface Subsystem}
+\textbf{Responsibilities:}
+\begin{itemize}[nosep]
+    \item Display item catalog with search and filter capabilities
+    \item Handle user authentication (login/registration for both shoppers and sellers)
+    \item Manage shopping cart display and checkout forms
+    \item Provide seller dashboard for listing management
+    \item Render order confirmation and history pages
+\end{itemize}
+
+\newpage
+
+\subsubsection{Item \& Inventory Management Subsystem}
+\textbf{Responsibilities:}
+\begin{itemize}[nosep]
+    \item Track available item quantities across multiple sellers
+    \item Update stock levels when orders are placed
+    \item Manage item information (title, description, price, seller)
+    \item Handle seller inventory updates and new listings
+    \item Provide item search and recommendation functionality
+\end{itemize}
+
+\subsubsection{Order Processing Subsystem}
+\textbf{Responsibilities:}
+\begin{itemize}[nosep]
+    \item Create and validate shopper orders
+    \item Calculate totals including taxes and shipping
+    \item Process payment transactions
+    \item Generate order confirmations
+    \item Update order status (pending, shipped, delivered)
+    \item Coordinate seller fulfillment
+\end{itemize}
+
+\subsection{Subsystem Interactions}
+
+\textbf{User Interface $\leftrightarrow$ Item \& Inventory Management:}
+\begin{itemize}[nosep]
+    \item UI requests item catalog data for display
+    \item UI sends search queries and receives filtered results
+    \item UI retrieves real-time stock availability for each item
+    \item Seller interface submits new listings and inventory updates
+\end{itemize}
+
+\vspace{0.5cm}
+
+\noindent\textbf{User Interface $\leftrightarrow$ Order Processing:}
+\begin{itemize}[nosep]
+    \item UI submits shopping cart contents to create orders
+    \item UI receives order confirmation details
+    \item UI queries order history for shopper accounts
+\end{itemize}
+
+\vspace{0.5cm}
+
+\noindent\textbf{Order Processing $\leftrightarrow$ Item \& Inventory Management:}
+\begin{itemize}[nosep]
+    \item Order Processing checks stock availability before order confirmation
+    \item Order Processing requests inventory reduction when order is placed
+    \item Inventory Management notifies Order Processing of out-of-stock items
+    \item Order Processing may reserve items temporarily during checkout
+\end{itemize}
+
+\subsection{Block Diagram}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{../Figures/BlockDiagram.png}
+    \caption{Block diagram showing the three-tier layered architecture with subsystem interactions}
+    \label{fig:block-diagram}
+\end{figure}
+
+The block diagram (Figure \ref{fig:block-diagram}) illustrates the three-tier architecture with:
+\begin{itemize}[nosep]
+    \item Presentation Layer containing the User Interface Subsystem
+    \item Business Logic Layer with Item \& Inventory Management and Order Processing subsystems
+    \item Data Layer with Item Database, User Database, and Order Database
+    \item Bidirectional arrows showing request-response patterns between layers
+\end{itemize}
+
+\newpage
+
+\section{Part B: Design Pattern Exploration}
+
+\subsection{Controller Pattern}
+
+The \textbf{Controller Pattern} is a GRASP (General Responsibility Assignment Software Patterns) principle that assigns the job of receiving and coordinating system operations to a specific class. This class acts as a middleman between the user interface and the business logic. The controller is the first stop after the UI layer, and it delegates work to the right objects instead of doing the business logic itself.
+
+\vspace{0.5cm}
+
+There are two types of controllers: \textbf{Use Case Controllers} handle one specific workflow (like ProcessOrderController), while \textbf{Façade Controllers} handle all operations for a subsystem (like ShoppingController). The pattern keeps the UI and domain model loosely connected, making it easier to change the interface without breaking business logic. By putting all system event handling in one place, controllers prevent duplicate control logic across multiple UI components.
+
+\vspace{0.5cm}
+
+The controller doesn't have business rules—it just coordinates the objects that do. This makes testing easier since you can test business logic without needing the UI. Controllers are also a good place to add logging, security checks, and transaction management before passing work to domain objects.
+
+\vspace{0.5cm}
+
+\textbf{Real-World Example:} In a \textbf{Hospital Patient Management System}, a \\
+\texttt{PatientAdmissionController} receives requests from the receptionist's interface when admitting a new patient. The controller coordinates everything: it validates patient info with a \texttt{PatientValidator}, checks bed availability with a \texttt{BedManager}, creates insurance records through an \texttt{InsuranceHandler}, and generates documents via a \texttt{DocumentGenerator}. The controller doesn't do these tasks itself—it just makes sure they happen in the right order while keeping the UI separate from the backend objects.
+
+\subsection{Expert Pattern}
+
+The \textbf{Information Expert Pattern} (or just Expert Pattern) is another GRASP principle that assigns responsibility to the class that has the information needed to do the job. It keeps related data and behavior together, which is a key part of object-oriented programming. The pattern answers "Which class should handle this task?" with "The class that already has the data to do it."
+
+\vspace{0.5cm}
+
+When we assign responsibilities to information experts, we get classes where data and the methods that use that data live in the same place. This reduces coupling because other classes don't have to pull out information and do calculations themselves—they just ask the expert object to handle it. The code is easier to maintain because changes to how something is calculated only affect the one expert class.
+
+\vspace{0.5cm}
+\newpage
+
+You see this pattern everywhere in OOP. If we need to calculate an order's total price, we ask the Order object (which has the line items) instead of having some other class pull out the line items and do the math. This way, if the calculation changes (like adding discounts or taxes), we only change the Order class.
+
+\vspace{0.5cm}
+
+\textbf{Real-World Example:} In a \textbf{Smart Home Energy Management System}, the \texttt{EnergyMeter} class calculates total energy consumption for billing. This class has access to hourly readings, peak/off-peak rates, and billing multipliers. Instead of having the billing system pull all this data out and do calculations, the \texttt{EnergyMeter.calculateBillAmount()} method handles it. If the utility company changes their rate structure, only the \texttt{EnergyMeter} class needs updating. Everything else just calls \texttt{meter.calculateBillAmount()} without needing to know how the calculation works.
+
+\newpage
+
+\section{Part C: UML Diagramming}
+
+\subsection{Use Case Diagram}
+
+The use case diagram shows the functional requirements of the Online Shopping Platform from the users' perspectives.
+
+\vspace{0.5cm}
+
+\noindent\textbf{Actors:}
+\begin{itemize}[nosep]
+    \item Shopper (primary user who buys items)
+    \item Seller (manages item listings and inventory)
+    \item Payment System (external system)
+\end{itemize}
+
+\vspace{0.5cm}
+
+\noindent\textbf{Use Cases:}
+\begin{itemize}[nosep]
+    \item Browse Items
+    \item Search Items
+    \item Place Order
+    \item Process Payment
+    \item View Order History
+    \item Manage Listings
+\end{itemize}
+
+\vspace{0.5cm}
+
+\noindent\textbf{Key Relationships:}
+\begin{itemize}[nosep]
+    \item "Place Order" \textit{includes} "Process Payment" (placing an order always includes payment processing)
+    \item "Search Items" \textit{extends} "Browse Items" (search is optional enhancement of browsing)
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.60\textwidth]{../Figures/UseCaseDiagram.png}
+    \caption{Use Case Diagram showing actors and their interactions with the system}
+    \label{fig:usecase-diagram}
+\end{figure}
+
+\subsection{Class Diagram (Applying Controller and Expert Patterns)}
+
+The class diagram demonstrates the application of Controller and Expert patterns in the system design.
+
+\textbf{Key Classes:}
+\begin{itemize}[nosep]
+    \item \textbf{ShoppingController} (Controller Pattern) - Coordinates system operations
+    \item \textbf{ShoppingCart} (Expert Pattern) - Knows cart contents and calculates totals
+    \item \textbf{Order} (Expert Pattern) - Knows order details and calculates subtotals, tax, and final totals
+    \item \textbf{Item} (Expert Pattern) - Knows its own price, availability, and stock quantity
+    \item \textbf{ItemManager} - Manages item catalog and inventory
+    \item \textbf{OrderProcessor} - Creates orders and processes payments
+    \item \textbf{CartItem} - Represents an item in the shopping cart (part of ShoppingCart)
+    \item \textbf{OrderItem} - Represents an item in an order (part of Order)
+\end{itemize}
+
+\textbf{Relationships (following textbook notation):}
+\begin{itemize}[nosep]
+    \item ShoppingController uses ItemManager, OrderProcessor, and ShoppingCart (dependencies)
+    \item ItemManager manages Items (dependency)
+    \item ShoppingCart contains CartItems (composition \(\blacklozenge\), 1..*)
+    \item Order contains OrderItems (composition \(\blacklozenge\), 1..*)
+    \item CartItem references exactly 1 Item (association)
+    \item OrderItem references exactly 1 Item (association)
+    \item OrderProcessor creates Orders (dependency)
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.60\textwidth]{../Figures/ClassDiagram.png}
+    \caption{Class Diagram showing Controller and Expert pattern applications}
+    \label{fig:class-diagram}
+\end{figure}
+
+\subsection{Activity Diagram (Core Workflow: Place Order)}
+
+The activity diagram illustrates the complete workflow for placing an order, organized into three swimlanes representing different actors and systems.\par
+
+\vspace{0.25cm}
+
+\noindent\textbf{Swimlanes:}
+\begin{enumerate}
+    \item \textbf{Shopper} - Customer actions (browsing, selecting items, confirming order)
+    \item \textbf{System} - Automated shopping platform processes (checking availability, validating credentials, creating orders)
+    \item \textbf{Payment System} - External payment processing
+\end{enumerate}
+
+\noindent\textbf{Key Workflow Steps:}
+\begin{itemize}[nosep]
+    \item Browse/search items and select item
+    \item System checks item availability before adding to cart
+    \item Shopping loop allows adding multiple items
+    \item Proceed to checkout requires login/authentication
+    \item Review order summary with option to modify cart
+    \item System verifies item availability and reserves inventory (parallel activities)
+    \item Payment system processes transaction with retry/cancel options
+    \item System creates order, updates inventory, and sends notifications (parallel to shopper and seller)
+    \item Shopper views order confirmation
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\textwidth]{../Figures/ActivityDiagram.png}
+    \caption{Activity Diagram showing the complete place order workflow with swimlanes}
+    \label{fig:activity-diagram}
+\end{figure}
+
+\newpage
+
+\section{Part D: Pattern Application Reflection}
+
+\subsection{How Patterns Improve System Design}
+
+Using the \textbf{Controller} and \textbf{Expert} patterns makes the Online Shopping Platform design much better in several ways. These patterns give us proven solutions to common problems and make the system easier to maintain and scale.
+
+\subsection{Problems Each Pattern Solves}
+
+\subsubsection{Controller Pattern}
+
+The \textbf{Controller Pattern} fixes the problem of \textbf{tight coupling between the UI and business logic}. Without a controller, UI components would directly create and manipulate domain objects, which causes several issues:
+
+\begin{enumerate}
+    \item \textbf{Scattered system logic}: Every UI component (web page, mobile screen, API endpoint) would need to know the exact sequence of operations for complex workflows. In our shopping platform, placing an order means checking inventory, validating the cart, processing payment, and updating multiple subsystems. Without a controller, this coordination logic gets duplicated everywhere.
+    
+    \item \textbf{Hard to change the UI}: If we want to add a mobile app next to our web interface, we'd have to rewrite all the coordination logic. The Controller Pattern fixes this by putting all system operations in one place.
+    
+    \item \textbf{Hard to test}: Testing business logic is tough when it's mixed with UI code. With a controller, we can test the order placement workflow without needing any UI at all.
+\end{enumerate}
+
+In the shopping platform, the \texttt{ShoppingController} acts as a single entry point. When a shopper places an order, the UI just calls \texttt{controller.handlePlaceOrder()}. The controller then talks to \texttt{ItemManager} to check stock and \texttt{OrderProcessor} to create the order. If we need to add something new (like fraud detection), we only change the controller, not every UI component.
+
+\subsubsection{Expert Pattern}
+
+The \textbf{Expert Pattern} solves the problem of \textbf{deciding which class should do what}. It answers "Where should this method go?" and prevents several bad practices:
+
+\begin{enumerate}
+    \item \textbf{Feature envy}: Without Expert Pattern, external classes would constantly pull data out of objects and do calculations themselves. For example, a billing service might extract all items from a cart, loop through them, grab each book's price, and calculate the total. This breaks encapsulation and spreads calculation knowledge all over the code.
+    
+    \item \textbf{Weak cohesion}: When methods end up in classes that don't have the data they need, those classes get messy and confusing. Expert Pattern keeps things focused by putting related data and behavior together.
+    
+    \item \textbf{Fragile design}: When calculation logic lives outside the data classes, changing the data structure means updating code in multiple places.
+\end{enumerate}
+
+In the shopping platform, the \texttt{ShoppingCart} class shows Expert Pattern in action. It has \texttt{calculateTotal()} because it's the expert—it knows what items are in the cart. The \texttt{Order} class calculates its own subtotal, tax, and total because it has the order items. The \texttt{Item} class has \texttt{isAvailable()} because it knows its own stock quantity. If we change how prices work (adding discounts, membership pricing, etc.), we only change the expert class that handles that calculation.
+
+\subsection{Benefits for Large Teams and Evolving Codebases}
+
+These patterns become way more valuable as projects get bigger and more complex. Here's how they help:
+
+\subsubsection{For Large Teams}
+
+\begin{enumerate}
+    \item \textbf{Clear ownership}: Controller Pattern sets clear boundaries between frontend and backend developers. The frontend team just needs to call controller methods, while the backend team handles coordination logic. Expert Pattern makes it obvious who owns what—the order processing team owns the Order class and its calculations.
+    
+    \item \textbf{Parallel development}: Different people can work on different parts without stepping on each other's toes. One dev can improve the \texttt{InventoryManager} while another works on \texttt{OrderProcessor}, as long as they respect the controller's interface. Expert Pattern helps by keeping functionality in one place, reducing merge conflicts.
+    
+    \item \textbf{Easier code reviews}: Reviewers can quickly spot when responsibilities are wrong. If someone puts order total calculations in the \texttt{ShoppingController} instead of the \texttt{Order} class, it's obviously breaking Expert Pattern. Having this shared vocabulary helps teams talk about design.
+    
+    \item \textbf{Easier onboarding}: New team members understand the system faster when patterns are used consistently. They learn that controllers coordinate things and experts handle their own data, making the code more predictable.
+\end{enumerate}
+
+\subsubsection{For Evolving Codebases}
+
+\begin{enumerate}
+    \item \textbf{Less impact from changes}: When requirements change, patterns limit the damage. Adding a new payment method? Just modify \texttt{OrderProcessor}, and the controller calls the same method. UI stays the same. Discount rules change? Update the \texttt{Order} class's calculation methods, not every place that shows prices.
+    
+    \item \textbf{Easier refactoring}: Patterns give you stable structures to work with. If inventory checking is slow, we can optimize \texttt{ItemManager} without touching the controller or UI. The separation means we can even swap out entire components as long as the interface stays the same.
+    
+    \item \textbf{Technology migration}: When tech changes, we might go from web to mobile or add a REST API. Controller Pattern makes this doable because business logic isn't tied to any specific UI. We just create new UI components that call the same controller methods.
+    
+    \item \textbf{Better testing}: Both patterns make testing easier. Controllers can be tested with mocks for their dependencies. Expert objects can be unit tested alone—we can test \texttt{Order.calculateTotal()} without needing UI, databases, or anything else. This makes automated testing way easier.
+    
+    \item \textbf{Self-documenting code}: When patterns are used consistently, code explains itself. A dev looking at \texttt{ShoppingCart.calculateTotal()} immediately knows this is where cart calculations happen. No searching through multiple files wondering where totals get computed.
+\end{enumerate}
+
+\subsection{Example: Adding a Membership Discount Program}
+
+Here's a practical example showing why these patterns matter. Say the business wants tiered discounts for members:
+
+\vspace{0.25cm}
+
+\noindent\textbf{Without patterns:}
+\begin{itemize}[nosep]
+    \item Hunt through the entire codebase for every price calculation
+    \item UI components probably have hardcoded math
+    \item Different screens might calculate discounts differently
+    \item Testing means running the whole app
+\end{itemize}
+
+\vspace{0.25cm}
+
+\noindent\textbf{With patterns:}
+\begin{itemize}[nosep]
+    \item \textbf{Expert Pattern}: Add \texttt{calculateDiscount()} to the \texttt{Order} class and update \texttt{calculateTotal()} to use it
+    \item \textbf{Controller Pattern}: Controller keeps calling \texttt{order.calculateTotal()}—doesn't need to know about discounts
+    \item UI just displays whatever total the order returns—no changes needed
+    \item Write unit tests for \texttt{Order.calculateDiscount()} by itself
+    \item The change stays in one place, less risk and faster development
+\end{itemize}
+
+\vspace{0.5cm}
+
+This separation is what lets systems evolve over years without becoming unmaintainable. Without patterns, codebases turn into "legacy" systems where every change is risky and expensive.
+
+\newpage
+
+\subsection{Conclusion}
+
+Controller and Expert patterns turn the Online Shopping Platform from a potential mess of tangled components into a clean, maintainable system. Controller Pattern gives us clear coordination points and keeps UI separate from business logic. Expert Pattern makes sure responsibilities go to the classes that have the right information. Together, they build a foundation that supports team work, handles changing requirements, and stays understandable as the system grows. These patterns come from decades of experience figuring out what makes software maintainable, and using them here shows why they're core principles of good object-oriented design.
+
+\subsection{Diagram Reference}
+
+For quick navigation, all diagrams included in this assignment are listed below:
+
+\begin{itemize}[nosep]
+    \item \textbf{Figure \ref{fig:block-diagram}}: Block Diagram (page \pageref{fig:block-diagram}) - Shows the three-tier layered architecture with subsystem interactions
+    \item \textbf{Figure \ref{fig:usecase-diagram}}: Use Case Diagram (page \pageref{fig:usecase-diagram}) - Shows actors and their interactions with the system
+    \item \textbf{Figure \ref{fig:class-diagram}}: Class Diagram (page \pageref{fig:class-diagram}) - Demonstrates Controller and Expert pattern applications
+    \item \textbf{Figure \ref{fig:activity-diagram}}: Activity Diagram (page \pageref{fig:activity-diagram}) - Illustrates the complete place order workflow with swimlanes
+\end{itemize}
+
+\vspace{1cm}
+
+\noindent\rule{\textwidth}{0.4pt}
+
+\vspace{0.5cm}
+
+\section*{References}
+\addcontentsline{toc}{section}{References}
+
+\begin{itemize}[nosep]
+    \item Kung, David C. (2013). \textit{Software Engineering: An Object-Oriented Perspective} (2nd ed.). Course textbook chapters 3.4, 3.5, 10.1–10.6.
+\end{itemize}
+
+\end{document}
+

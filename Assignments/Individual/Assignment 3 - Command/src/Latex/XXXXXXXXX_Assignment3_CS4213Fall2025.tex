@@ -1,0 +1,430 @@
+\documentclass[12pt,letterpaper]{article}
+
+% Packages
+\usepackage[margin=1in]{geometry}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{enumitem}
+\usepackage[colorlinks=true, linkcolor=blue, urlcolor=blue, citecolor=blue]{hyperref}
+\usepackage[all]{hypcap}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\usepackage{amssymb}
+\usepackage{lastpage}
+\usepackage{setspace}
+
+% Header/Footer
+\pagestyle{fancy}
+\fancyhf{}
+\rhead{Assignment 3: Command}
+\lhead{CS 4213 - Design Patterns}
+\rfoot{Page \thepage/\pageref*{LastPage}}
+\lfoot{Colby Frison \\ XXXXXXXXX}
+
+% Title formatting
+\titleformat{\section}{\Large\bfseries}{\thesection}{1em}{}
+\titleformat{\subsection}{\large\bfseries}{\thesubsection}{1em}{}
+
+% Title
+\title{\textbf{Assignment 3: Command} \\ Software Design Patterns}
+\author{\textbf{Student ID:} XXXXXXXXX \\ \textbf{Name:} Colby Frison \\ \textbf{Course:} CS 4213 - Fall 2025}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+\thispagestyle{empty}
+
+\newpage
+
+\tableofcontents
+
+\newpage
+
+\onehalfspacing
+
+\section{Part A: MVC Design}
+
+\subsection{Selected System: Note-taking Application}
+
+I have chosen to analyze a \textbf{Note-taking Application}, a system that allows users to create, edit, organize, and search through personal notes. The system provides a clear separation of concerns that naturally maps to the Model-View-Controller (MVC) architectural pattern.
+
+\vspace{0.2cm}
+\noindent{The note-taking application includes the following core features:}
+\begin{itemize}[nosep]
+    \item Creating and editing notes with title and content
+    \item Organizing notes into notebooks
+    \item Tagging notes with categories for better organization
+    \item Searching through notes by content or tags
+    \item Viewing lists of notes with filtering capabilities
+\end{itemize}
+
+\subsection{MVC Component Definitions}
+
+\subsubsection{Model Components}
+
+The Model layer represents the business data and domain logic of the application. It is independent of the user interface and contains the core entities and data access operations.
+
+\noindent{\textbf{Note:}} The core data entity representing a single note. It contains:
+\begin{itemize}[nosep]
+    \item Unique identifier (id)
+    \item Title and content (text fields)
+    \item Creation and modification timestamps
+    \item Associated tags for categorization
+\end{itemize}
+
+\noindent{The Note class encapsulates its data and provides controlled access through getter and setter methods. It also manages its own state, such as updating the last modified timestamp when content changes.}
+
+\vspace{0.2cm}
+
+\noindent{\textbf{Notebook:}} A container for organizing multiple notes. It provides:
+\begin{itemize}[nosep]
+    \item A name for the notebook
+    \item A collection of notes
+    \item Methods to add, remove, and query notes
+\end{itemize}
+
+\noindent{\textbf{Tag:}} Represents a category or label that can be applied to notes. Tags allow users to organize notes across different notebooks and enable filtering and searching by category.
+
+\newpage
+
+\noindent{\textbf{NoteRepository:}} The data access layer that handles persistence operations. It abstracts the storage mechanism (file system, database, etc.) and provides methods for:
+\begin{itemize}[nosep]
+    \item Saving and loading notes
+    \item Searching notes by content or tags
+    \item Deleting notes
+    \item Querying all notes
+\end{itemize}
+
+\noindent{The repository pattern ensures that the rest of the application does not need to know about the specific storage implementation, making it easier to change storage mechanisms in the future.}
+
+\subsubsection{View Components}
+
+The View layer is responsible for presenting information to the user and capturing user input. Views are passive components that display data and notify controllers of user actions, but they do not directly manipulate the model.
+
+\vspace{0.2cm}
+\noindent{\textbf{NoteListView:}} Displays a list of all notes with basic information such as title, creation date, and associated tags. It provides functionality to:
+\begin{itemize}[nosep]
+    \item Display notes in a scrollable list
+    \item Show note details on selection
+    \item Refresh the display when notes are updated
+    \item Notify the controller when a note is selected
+\end{itemize}
+
+\noindent{\textbf{NoteEditorView:}} A rich text editor interface for creating and editing notes. It provides:
+\begin{itemize}[nosep]
+    \item Input fields for title and content
+    \item Save and cancel buttons
+    \item Display of existing note data when editing
+    \item User action notifications to the controller
+\end{itemize}
+
+\noindent{\textbf{SearchView:}} The search interface that allows users to find notes by content. It includes:
+\begin{itemize}[nosep]
+    \item A search input box
+    \item Display of search results
+    \item Submission of search queries to the controller
+\end{itemize}
+
+\noindent{\textbf{CategoryView:}} Interface for managing tags and categories. It allows users to:
+\begin{itemize}[nosep]
+    \item View all available tags
+    \item Create new tags
+    \item Select tags to filter notes
+    \item Manage tag properties (name, color)
+\end{itemize}
+
+\subsubsection{Controller Components}
+
+Controllers act as intermediaries between views and the model. They receive user input from views, coordinate operations on the model, and update views with results. Controllers contain no business logic themselves but orchestrate the interaction between components.
+
+\noindent{\textbf{NoteController:}} Handles all note-related operations including:
+\begin{itemize}[nosep]
+    \item Creating new notes
+    \item Loading and displaying notes for editing
+    \item Saving note changes
+    \item Deleting notes
+    \item Loading all notes for list display
+    \item Coordinating between NoteListView and NoteEditorView
+\end{itemize}
+
+\noindent{\textbf{SearchController:}} Manages search functionality by:
+\begin{itemize}[nosep]
+    \item Receiving search queries from SearchView
+    \item Coordinating with NoteRepository to perform searches
+    \item Filtering and formatting search results
+    \item Updating SearchView with results
+\end{itemize}
+
+\noindent{\textbf{CategoryController:}} Handles tag and category operations including:
+\begin{itemize}[nosep]
+    \item Creating new tags
+    \item Adding tags to notes
+    \item Removing tags from notes
+    \item Loading all tags for display
+\end{itemize}
+
+\newpage
+\subsection{UML Class Diagram}
+
+The UML class diagram (Figure \ref{fig:mvc-class}) illustrates the complete MVC architecture of the note-taking application. The diagram is organized into three packages representing the Model, View, and Controller layers.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.87\textwidth]{../Diagrams/MVC_Class_Diagram.png}
+    \caption{UML Class Diagram showing MVC architecture with Model, View, and Controller components}
+    \label{fig:mvc-class}
+\end{figure}
+
+\newpage
+\subsection{Sequence Diagram: Create Note Interaction}
+
+The sequence diagram (Figure \ref{fig:mvc-sequence}) illustrates a complete user interaction for creating a new note. This interaction demonstrates how all three MVC components work together to fulfill a user request.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\textwidth]{../Diagrams/MVC_Sequence_Diagram.png}
+    \caption{Sequence Diagram showing the complete "Create Note" user interaction flow}
+    \label{fig:mvc-sequence}
+\end{figure}
+
+\newpage
+\section{Part B: Refactoring Plan}
+
+This section presents a refactoring plan for improving a tightly coupled version of the note-taking application. The current system has several design issues that reduce maintainability, flexibility, and testability. Three specific refactoring areas are identified, each targeting a different quality attribute: \textbf{flexibility}, \textbf{reuse}, and \textbf{testability}.
+
+\subsection{Refactoring 1: Extract Interface for Flexibility}
+
+\subsubsection{Problem Description}
+
+The current system has a tight coupling between the \texttt{NoteController} and the concrete \texttt{FileStorage} implementation. The controller directly instantiates and depends on \texttt{FileStorage}, making it impossible to switch to alternative storage mechanisms (such as \texttt{DatabaseStorage} or \texttt{CloudStorage}) without modifying the controller code.
+
+\noindent{This creates several problems:}
+\vspace{0.1cm}
+\begin{itemize}[nosep]
+    \item \textbf{Lack of Flexibility:} Changing storage mechanisms requires modifying controller code, violating the Open/Closed Principle.
+    
+    \item \textbf{Difficulty Testing:} Unit testing the controller requires actual file system operations, making tests slow and dependent on the file system state.
+    
+    \item \textbf{Vendor Lock-in:} The system is tightly bound to file-based storage, making it difficult to support multiple storage backends or allow users to choose their preferred storage method.
+    
+    \item \textbf{Code Duplication:} If multiple controllers need storage access, each would need to know about the concrete storage implementation.
+\end{itemize}
+
+\subsubsection{Refactoring Technique: Extract Interface}
+
+The solution is to apply the \textbf{Extract Interface} refactoring technique. This involves:
+\begin{enumerate}[nosep]
+    \item Creating an \texttt{IStorageRepository} interface that defines the common operations needed by controllers
+    \item Making \texttt{FileStorage}, \texttt{DatabaseStorage}, and any future storage implementations implement this interface
+    \item Modifying \texttt{NoteController} to depend on the interface rather than the concrete class
+    \item Using dependency injection to provide the specific storage implementation at runtime
+\end{enumerate}
+
+\vspace{0.1cm}
+\noindent{This refactoring follows the Dependency Inversion Principle, which states that high-level modules should not depend on low-level modules; both should depend on abstractions.}
+
+\subsubsection{UML Diagram: Before and After}
+
+Figure \ref{fig:refactor1} shows the system before and after the refactoring.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\textwidth]{../Diagrams/Refactoring1_Flexibility.png}
+    \caption{Refactoring 1: Extract Interface - Before (tight coupling) and After (interface-based design)}
+    \label{fig:refactor1}
+\end{figure}
+
+\noindent{\textbf{Before Refactoring:}} The controller directly depends on \texttt{FileStorage}, creating a tight coupling. Adding support for \texttt{DatabaseStorage} would require modifying the controller.
+
+\noindent{\textbf{After Refactoring:}} The controller depends on the \texttt{IStorageRepository} interface. Multiple implementations can exist (FileStorage, DatabaseStorage, CloudStorage), and the controller can work with any of them. The specific implementation is provided through dependency injection, allowing the storage mechanism to be configured at runtime without changing controller code.
+
+\noindent{\textbf{Benefits:}}
+\begin{itemize}[nosep]
+    \item The system can easily switch between storage implementations
+    \item New storage types can be added without modifying existing code
+    \item Controllers can be tested with mock storage implementations
+    \item The system supports multiple storage backends simultaneously
+\end{itemize}
+
+\newpage
+\subsection{Refactoring 2: Extract Class for Reuse}
+
+\subsubsection{Problem Description}
+
+Validation and input sanitization logic is duplicated across multiple controller classes. The \texttt{NoteController}, \texttt{SearchController}, and \texttt{CategoryController} each contain similar methods for validating input, checking length constraints, sanitizing user input, and handling validation errors.
+
+\vspace{0.1cm}
+\noindent{This duplication creates several problems:}
+\vspace{0.1cm}
+\begin{itemize}[nosep]
+    \item \textbf{Code Duplication:} The same validation logic is repeated in multiple places, violating the DRY (Don't Repeat Yourself) principle.
+    
+    \item \textbf{Inconsistent Behavior:} Different controllers may implement validation slightly differently, leading to inconsistent user experience and potential security issues.
+    
+    \item \textbf{Maintenance Burden:} When validation rules change (e.g., new requirements for password strength or content length), developers must update code in multiple locations, increasing the risk of errors and inconsistencies.
+    
+    \item \textbf{Difficulty Testing:} Validation logic scattered across controllers makes it harder to write comprehensive test suites for validation rules.
+    
+    \item \textbf{Lack of Reusability:} New controllers or features that need validation must reimplement the same logic rather than reusing existing code.
+\end{itemize}
+
+\subsubsection{Refactoring Technique: Extract Class}
+
+The solution is to apply the \textbf{Extract Class} refactoring technique. This involves:
+\begin{enumerate}[nosep]
+    \item Creating a new \texttt{NoteValidator} class that centralizes all validation logic
+    \item Moving validation methods from controllers to the validator class
+    \item Creating a \texttt{ValidationResult} class to provide structured feedback about validation outcomes
+    \item Updating all controllers to use the shared validator instance
+    \item Ensuring the validator provides methods for all validation scenarios (title, content, tag names, search queries)
+\end{enumerate}
+
+\noindent{This refactoring follows the Single Responsibility Principle by giving the validator class one clear responsibility: validating input according to business rules.}
+
+\newpage
+\subsubsection{UML Diagram: Before and After}
+
+Figure \ref{fig:refactor2} shows the system before and after the refactoring.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\textwidth]{../Diagrams/Refactoring2_Reuse.png}
+    \caption{Refactoring 2: Extract Class - Before (duplicated validation) and After (centralized validator)}
+    \label{fig:refactor2}
+\end{figure}
+
+\noindent{\textbf{Before Refactoring:}} Each controller contains its own validation methods (\texttt{validateTitle}, \texttt{validateContent}, \texttt{sanitizeInput}, etc.), leading to code duplication and potential inconsistencies.
+
+\noindent{\textbf{After Refactoring:}} All validation logic is centralized in the \texttt{NoteValidator} class. Controllers depend on the validator and delegate validation to it. The \texttt{ValidationResult} class provides a structured way to return validation outcomes, including success status and error messages.
+
+\noindent{\textbf{Benefits:}}
+\begin{itemize}[nosep]
+    \item Validation logic is defined in one place, making it easier to maintain and update
+    \item Consistent validation behavior across all controllers
+    \item Easier to test validation rules in isolation
+    \item New controllers can reuse existing validation logic
+    \item Validation rules can be extended without modifying controller code
+\end{itemize}
+
+\newpage
+\subsection{Refactoring 3: Extract Service Layer for Testability}
+
+\subsubsection{Problem Description}
+
+Business logic is mixed with controller coordination logic, making the system difficult to test. The \texttt{NoteController} contains both coordination code (handling actions, updating views) and business logic (word count, formatting, checking for duplicate titles).
+
+\noindent{This mixing of concerns creates several problems:}
+\begin{itemize}[nosep]
+    \item \textbf{Poor Testability:} To test business logic, test code must instantiate controllers and views, making unit tests complex and slow. Business logic cannot be tested independently of UI components.
+    
+    \item \textbf{Tight Coupling:} Business logic is coupled to controller and view code, making it difficult to reuse business operations in different contexts (e.g., batch processing, API endpoints, background jobs).
+    
+    \item \textbf{Violation of Single Responsibility:} Controllers have multiple responsibilities: coordinating user interactions, managing business logic, and updating views. This makes controllers large and difficult to understand.
+    
+    \item \textbf{Difficulty Reusing Logic:} Business operations like word count calculation or content formatting cannot be easily reused by other parts of the system without going through controllers.
+    
+    \item \textbf{Slower Development:} Changes to business logic require understanding and potentially modifying controller code, slowing down development and increasing the risk of introducing bugs.
+\end{itemize}
+
+\subsubsection{Refactoring Technique: Extract Service Layer}
+
+The solution is to apply the \textbf{Extract Service Layer} refactoring technique (also known as introducing a Service Layer pattern). This involves:
+\begin{enumerate}[nosep]
+    \item Creating a \texttt{NoteService} class that contains all business logic operations
+    \item Moving business logic methods from the controller to the service (word count, formatting, duplicate checking, etc.)
+    \item Making the service depend on the repository for data access
+    \item Updating the controller to delegate business operations to the service
+    \item Ensuring the controller becomes a thin coordination layer that only handles user interaction flow
+\end{enumerate}
+
+This refactoring follows the Separation of Concerns principle by clearly separating business logic from presentation and coordination logic.
+
+\subsubsection{UML Diagram: Before and After}
+
+Figure \ref{fig:refactor3} shows the system before and after the refactoring.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\textwidth]{../Diagrams/Refactoring3_Testability.png}
+    \caption{Refactoring 3: Extract Service Layer - Before (mixed concerns) and After (separated service layer)}
+    \label{fig:refactor3}
+\end{figure}
+
+\textbf{Before Refactoring:} The controller contains both coordination logic and business logic. Methods like \texttt{calculateWordCount}, \texttt{formatContent}, and \texttt{checkDuplicateTitle} are mixed with view update code, making it difficult to test business logic independently.
+
+\textbf{After Refactoring:} Business logic is extracted to the \texttt{NoteService} layer. The service depends on the repository for data access and provides business operations that can be used by controllers or other parts of the system. The controller becomes a thin layer that coordinates user actions and delegates business operations to the service.
+
+\textbf{Benefits:}
+\begin{itemize}[nosep]
+    \item Business logic can be unit tested independently of controllers and views
+    \item Business operations can be reused by other components (APIs, background jobs, etc.)
+    \item Controllers are simpler and easier to understand
+    \item Business logic changes do not require modifying controller or view code
+    \item The system can support multiple interfaces (web, mobile, API) that all use the same service layer
+    \item Easier to apply business rules consistently across the application
+\end{itemize}
+
+\newpage
+
+\section{Part C: Tool Use and Reflection}
+
+\subsection{Refactoring Tool: Visual Studio Code}
+
+Visual Studio Code provides built-in refactoring capabilities that help with the refactorings described in this assignment.
+
+\subsubsection{Key Refactoring Features}
+
+VS Code provides several essential refactoring operations:
+
+\noindent{\textbf{Rename Symbol:}} Automatically finds and updates all references when renaming classes, methods, or variables. Essential for all three refactorings when extracting classes or interfaces.
+
+\noindent{\textbf{Extract Method:}} Extracts selected code blocks into new methods, automatically identifying parameters and return types. Useful for Refactoring 2 (Extract Class) when moving methods to the validator class.
+
+\noindent{\textbf{Move Symbol:}} Moves classes, methods, or functions to different files, automatically updating import statements. Directly supports Refactoring 3 (Extract Service Layer) when moving business logic to service classes.
+
+\noindent{\textbf{Extract Variable:}} Introduces variables for complex expressions, improving code readability during refactoring preparation.
+
+\noindent{\textbf{Quick Fix and Code Actions:}} Provides context-aware suggestions for refactoring opportunities, such as extracting interfaces or creating new classes.
+
+\subsubsection{How VS Code Helps with Refactoring}
+
+VS Code's refactoring tools automatically update references across files, provide change previews, work across the entire workspace, and integrate with version control. These features make refactoring safer and more efficient than manual code changes.
+
+\newpage
+\subsection{Reflection}
+
+\subsubsection{Which Refactor Would Have the Biggest Impact?}
+
+After analyzing the three refactoring scenarios, I believe that \textbf{Refactoring 3: Extract Service Layer for Testability} would have the biggest impact on the system's long-term maintainability and development velocity.
+
+This refactoring addresses the fundamental problem of mixed concerns by separating business logic from controller coordination logic. By extracting business logic into a service layer, the system gains several critical advantages: business logic can be unit tested independently without requiring controllers or views, the same business operations can be reused across different interfaces (web, mobile, API), and the codebase becomes easier to understand and navigate. This separation also creates a foundation that makes other refactorings easier to apply, as the code is better organized with clear responsibilities.
+
+While Refactoring 1 (Extract Interface) improves flexibility and Refactoring 2 (Extract Class) improves code reuse, Refactoring 3 provides the architectural foundation that enables both of these improvements and many others.
+
+\subsubsection{How Would These Changes Affect Future Development?}
+
+When applied together, these three refactorings would significantly improve the system's ability to evolve and adapt to changing requirements:
+
+\vspace{0.1cm}
+\noindent{\textbf{Refactoring 1 (Extract Interface)}} enables the system to adopt new storage technologies without major rewrites, supports multiple storage backends simultaneously, and allows for easier testing with mock implementations.
+
+\vspace{0.1cm}
+\noindent{\textbf{Refactoring 2 (Extract Class)}} ensures consistent validation behavior across the application, speeds up feature development by reusing validation logic, and makes it easier to update validation rules in one place when requirements change.
+
+\vspace{0.1cm}
+\noindent{\textbf{Refactoring 3 (Extract Service Layer)}} enables support for multiple interfaces (web, mobile, API) sharing the same business logic, allows frontend and backend teams to work in parallel, and makes business logic changes independent of UI code.
+
+Together, these refactorings create a system that is more maintainable, testable, extensible, and flexible. The clear separation of concerns makes it easier to locate and modify code, each layer can be tested independently, and new features can be added without modifying existing code. This architectural foundation supports long-term development efforts and makes the system resilient to changes in requirements or technology.
+
+\newpage
+
+\section*{References}
+\addcontentsline{toc}{section}{References}
+
+\begin{enumerate}[nosep]
+    \item Kung, David C. (2013). \textit{Software Engineering: An Object-Oriented Perspective} (2nd ed.). Course textbook chapters 16.6, 16.7, 17.1, 17.2, and 17.3.
+\end{enumerate}
+
+\end{document}
+

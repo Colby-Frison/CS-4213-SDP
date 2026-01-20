@@ -1,0 +1,287 @@
+\documentclass[12pt,letterpaper]{article}
+
+% Packages
+\usepackage[margin=1in]{geometry}
+\usepackage{graphicx}
+\usepackage{setspace}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{float}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{lastpage}
+
+% Configure hyperref
+\hypersetup{
+    colorlinks=true,
+    linkcolor=black,
+    filecolor=magenta,      
+    urlcolor=blue,
+    citecolor=black,
+}
+
+% Code listing settings
+\lstset{
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    frame=single,
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    keywordstyle=\color{blue},
+    commentstyle=\color{green!60!black},
+    stringstyle=\color{red},
+    showstringspaces=false
+}
+
+% Header and footer
+\setlength{\headheight}{14.5pt}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{Assignment 2: Composite Pattern}
+\fancyhead[R]{CS 4213 - Fall 2025}
+\fancyfoot[R]{Page \thepage/\pageref*{LastPage}}
+\fancyfoot[L]{Colby Frison \\ XXXXXXXXX}
+
+
+% Title formatting
+\titleformat{\section}{\Large\bfseries}{\thesection}{1em}{}
+\titleformat{\subsection}{\large\bfseries}{\thesubsection}{1em}{}
+
+\begin{document}
+
+% Cover Page
+\begin{titlepage}
+    \centering
+    \vspace*{2cm}
+    
+    {\Huge\bfseries Assignment 2: Composite Pattern\\}
+    \vspace{0.5cm}
+    {\Large Design Patterns Implementation}
+    
+    \vspace{2cm}
+    
+    {\Large\textbf{File System Explorer Application}}
+    
+    \vspace{3cm}
+    
+    {\large
+    \textbf{Name:} Colby Frison\\[0.5cm]
+    \textbf{Student ID:} XXXXXXXXX\\[0.5cm]
+    \textbf{Course:} CS 4213 - Software Design Patterns\\[0.3cm]
+    \textbf{Semester:} Fall 2025\\[0.3cm]
+    \textbf{Assignment:} DP Assignment 2 - Composite\\[0.3cm]
+    \textbf{Due Date:} End of Week 12\\
+    }
+    
+    \vfill
+    
+    {\large \today}
+    
+\end{titlepage}
+
+% Set page numbering
+\pagenumbering{arabic}
+\onehalfspacing
+
+% Table of Contents
+\tableofcontents
+\newpage
+
+\section{Hierarchical System Context}
+
+\subsection{Domain: File System Explorer}
+
+The domain selected for this assignment is a \textbf{File System Explorer}, which demonstrates hierarchical structures naturally. File systems are inherently hierarchical, with folders containing files and other folders, which can be nested to any depth.
+
+\subsection{Feature and Module Description}
+
+The file system explorer handles navigation and management of nested folder structures:
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Multiple layers interact:} Each folder can contain individual files, subfolders, or a mix of both
+    \item \textbf{Recursive operations:} The system needs to traverse through however many levels of nesting exist
+    \item \textbf{Uniform interface:} Both files and folders respond to the same set of operations, even though they work differently internally
+\end{itemize}
+
+\subsection{Uniform Operations Needed Across Levels}
+
+These operations work the same way whether called on a single file or an entire folder tree:
+
+\begin{enumerate}[leftmargin=*]
+    \item \texttt{display(indent)}: Shows the file or folder with indentation to indicate its level
+    \item \texttt{getSize()}: Returns size in bytes (a file's size, or the total for everything in a folder)
+    \item \texttt{search(name)}: Finds a file or folder by name
+    \item \texttt{getPath()}: Gets the full path from root to this item
+\end{enumerate}
+
+\newpage
+\subsection{Hierarchy Block Diagram}
+
+Figure \ref{fig:hierarchy} shows the hierarchical structure, illustrating how the root folder contains multiple levels of nested folders and files.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\textwidth]{figs/Hierarchical_Block_Diagram.pdf}
+    \caption{File System Hierarchical Block Diagram showing recursive directory and file relationships}
+    \label{fig:hierarchy}
+\end{figure}
+
+The diagram shows:
+\begin{itemize}
+    \item \textbf{Root Directory}: The top-level container
+    \item \textbf{Intermediate Directories}: \texttt{user/}, \texttt{home/}, \texttt{bin/}, \texttt{user1/}, \texttt{user2/}, \texttt{Documents/}
+    \item \textbf{Leaf Files}: \texttt{app.exe}, \texttt{documents.txt}, \texttt{config.json}, \texttt{report.pdf}
+\end{itemize}
+
+\newpage
+
+\section{Design and Modeling}
+
+\subsection{Applying the Composite Pattern}
+
+The design uses three roles from the Composite Pattern:
+
+\textbf{Component (FileSystemComponent):} This is the abstract base that defines what both files and folders can do, including \texttt{display()}, \texttt{getSize()}, \texttt{search()}, and \texttt{getPath()}. It also includes folder-only operations like \texttt{add()} and \texttt{remove()}, which throw an error if called on a file.
+
+\textbf{Leaf (File):} Represents individual files that don't contain anything else. Each file has a size and extension, and implements the operations in its own way.
+
+\textbf{Composite (Directory):} Represents folders that can hold files and other folders. It keeps a list of children and handles operations recursively, such as \texttt{getSize()} adding up everything inside, or \texttt{search()} looking through all children until it finds a match.
+
+\subsection{Adding a Creation Pattern: Factory Method}
+
+The \texttt{FileSystemFactory} provides methods for creating files and folders:
+\begin{itemize}
+    \item \texttt{createFile(name, size, extension)}: Creates a new file
+    \item \texttt{createDirectory(name)}: Creates a new folder
+    \item \texttt{createFromPath(path)}: Scans an actual file system path and builds the whole structure automatically
+\end{itemize}
+
+This keeps clients from having to know about the concrete File and Directory classes directly.
+
+\newpage
+\subsection{UML Class Diagram}
+
+Figure \ref{fig:uml} shows how all the classes relate to each other, including how File and Directory both inherit from FileSystemComponent, and how the Factory creates them.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\textwidth]{figs/UML_Class_Diagram.pdf}
+    \caption{UML Class Diagram of File System using Composite and Factory Patterns}
+    \label{fig:uml}
+\end{figure}
+
+\subsection{Activity Diagram: File Search Workflow}
+
+Figure \ref{fig:activity} shows how the search operation works: it checks the current item's name, and if it is a folder, recursively searches through all the children until it finds a match.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.75\textwidth]{figs/Activity_Diagram.pdf}
+    \caption{Activity Diagram: File Search Operation showing recursive traversal}
+    \label{fig:activity}
+\end{figure}
+
+\newpage
+
+\section{Pattern Specification and Interpreter}
+
+\subsection{Decision Table for Permission Checking}
+
+The decision table shows the rules for determining whether someone can access a file or folder based on their ownership and permissions.
+
+\begin{table}[H]
+\centering
+\caption{File Access Permission Decision Table}
+\label{tab:decision}
+\resizebox{.6\textwidth}{!}{
+\begin{tabular}{l|c|c|c|c|c|c}
+\toprule
+\textbf{Rule} & \textbf{R1} & \textbf{R2} & \textbf{R3} & \textbf{R4} & \textbf{R5} & \textbf{R6} \\
+\midrule
+\multicolumn{7}{l}{\textit{Conditions}} \\
+\midrule
+Is Owner? & Y & Y & Y & N & N & N \\
+Has Group Access? & - & - & - & Y & Y & N \\
+Is Read Permission? & Y & Y & N & Y & N & - \\
+Is Write Permission? & Y & N & - & N & Y & - \\
+Is Directory? & - & - & Y & - & Y & - \\
+\midrule
+\multicolumn{7}{l}{\textit{Actions}} \\
+\midrule
+Grant Full Access & X & - & - & - & - & - \\
+Grant Read Only & - & X & - & X & - & - \\
+Grant Write (Dir Only) & - & - & X & - & X & - \\
+Deny Access & - & - & - & - & - & X \\
+Log Access Attempt & X & X & X & X & X & X \\
+\bottomrule
+\end{tabular}
+}
+\end{table}
+
+\textbf{Rule Descriptions:}
+\begin{enumerate}
+    \item \textbf{R1}: Owner with read and write permissions gets full access
+    \item \textbf{R2}: Owner with only read permission gets read-only access
+    \item \textbf{R3}: Owner can create/delete in owned directories
+    \item \textbf{R4}: Group member with read permission gets read-only access
+    \item \textbf{R5}: Group member with write permission can modify directories
+    \item \textbf{R6}: Non-owner/non-group user is denied access
+\end{enumerate}
+
+\newpage
+\subsection{Encoding Logic with the Interpreter Pattern}
+
+These decision table rules can be encoded using the Interpreter Pattern. The approach involves building complex permission checks from simple, composable pieces:
+
+\begin{itemize}
+    \item \textbf{Context}: Holds the user's permission information (whether the user is the owner, has read access, etc.)
+    \item \textbf{Expression Interface}: Each expression can evaluate itself given the context
+    \item \textbf{Basic Checks}: Simple expressions like IsOwner, HasReadPerm, HasWritePerm
+    \item \textbf{Combinations}: Logical operators (AND, OR, NOT) that combine other expressions
+\end{itemize}
+
+\textbf{Example rule expressions:}
+
+{\footnotesize
+\begin{verbatim}
+Rule1 = (IS_OWNER AND HAS_READ_PERM AND HAS_WRITE_PERM)
+Rule2 = (IS_OWNER AND HAS_READ_PERM)
+GrantAccess = Rule1 OR Rule2
+\end{verbatim}
+}
+
+This approach enables building new rules by combining existing pieces, and allows each piece to be tested independently.
+
+\newpage
+
+\section{Reflection}
+
+\noindent\textbf{Why Composite Fits This Design}
+
+File systems are naturally hierarchical, because folders contain files and other folders, and they can be nested to any depth. The Composite Pattern fits this structure very well, since it enables treating both files and folders in the same way through a shared interface. When calling \texttt{getSize()} on a folder, it can walk through the tree and add up all the files inside without requiring special case code for recursion. The same \texttt{display()} or \texttt{search()} call works whether dealing with a single file or an entire folder tree. This uniform treatment means developers do not need to constantly write if statements that ask ``is this a file or a folder?'' in different parts of the system. The pattern also scales naturally, because adding more nesting levels or introducing new component types such as shortcuts does not require rewriting existing client code.
+
+\vspace{.2cm}
+\noindent\textbf{The Advantage of Factory Method}
+
+Adding the Factory Method gives the design a cleaner and more controlled way to create files and folders. Instead of client code directly calling \texttt{new File()} or \texttt{new Directory()}, it asks the factory for the components it needs. This is especially helpful for a method such as \texttt{createFromPath()}, which can scan the actual file system and automatically build the whole hierarchy, deciding whether each path is a file or a folder and creating the appropriate type. The factory also centralizes any initialization logic, such as setting default permissions or metadata, eliminating the need to duplicate the same setup code across multiple places. For testing, a factory can be swapped in that produces mock components instead of real ones, which makes it easier to test behavior without touching the real file system.
+
+\vspace{.2cm}
+\noindent\textbf{How Pattern-Based Logic Models Improve Maintainability}
+
+Decision tables make permission rules easy to see and easy to discuss. Instead of hunting through nested if statements scattered across different classes, all the rules are located in one place where both developers and non-technical stakeholders can read and review them. The Interpreter Pattern builds on this idea by breaking complex rules into small, reusable pieces, such as basic checks like \texttt{IsOwner} or \texttt{HasReadPermission}, which can then be combined using logical operators like AND, OR, and NOT. When permission requirements change, typically only one of these smaller pieces needs to be adjusted, rather than searching for every site where permissions are checked. Each expression can be tested on its own, and new rules can be assembled from existing expressions without modifying the old ones. Keeping the rule definitions separate from the rest of the business logic helps keep the system understandable and makes it easier to evolve over time.
+
+\newpage
+\section*{References}
+\addcontentsline{toc}{section}{References}
+
+\begin{enumerate}[nosep]
+    \item Kung, David C. (2013). \textit{Software Engineering: An Object-Oriented Perspective} (2nd ed.). Course textbook chapters 3.4, 3.5, 10.1–10.6.
+\end{enumerate}
+
+\end{document}
+
+

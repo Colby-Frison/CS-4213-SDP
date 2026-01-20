@@ -1,0 +1,86 @@
+@startuml Refactoring2_Reuse
+!theme plain
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+
+title Refactoring 2: Extract Class for Reuse
+
+package "Before Refactoring" {
+    class NoteController {
+        +createNote(String, String): void
+        +updateNote(String, String, String): void
+        +validateTitle(String): boolean
+        +validateContent(String): boolean
+        +sanitizeInput(String): String
+    }
+    
+    class SearchController {
+        +performSearch(String): void
+        +validateSearchQuery(String): boolean
+        +sanitizeInput(String): String
+    }
+    
+    class CategoryController {
+        +createTag(String): void
+        +validateTagName(String): boolean
+        +sanitizeInput(String): String
+    }
+    
+    note right of NoteController
+        **Problem:**
+        Validation and sanitization
+        logic duplicated across
+        multiple controllers
+    end note
+}
+
+
+
+package "After Refactoring" {
+    class NoteValidator {
+        +validateTitle(String): ValidationResult
+        +validateContent(String): ValidationResult
+        +validateTagName(String): ValidationResult
+        +validateSearchQuery(String): ValidationResult
+        +sanitizeInput(String): String
+        -checkLength(String, int, int): boolean
+        -checkForbiddenChars(String): boolean
+    }
+    
+    class ValidationResult {
+        -boolean isValid
+        -String errorMessage
+        +isValid(): boolean
+        +getErrorMessage(): String
+    }
+    
+    class NoteController {
+        -NoteValidator validator
+        +createNote(String, String): void
+        +updateNote(String, String, String): void
+    }
+    
+    class SearchController {
+        -NoteValidator validator
+        +performSearch(String): void
+    }
+    
+    class CategoryController {
+        -NoteValidator validator
+        +createTag(String): void
+    }
+    
+    NoteController --> NoteValidator : uses
+    SearchController --> NoteValidator : uses
+    CategoryController --> NoteValidator : uses
+    NoteValidator --> ValidationResult : returns
+    
+    note right of NoteValidator
+        **Solution:**
+        Centralized validation
+        logic in reusable class
+    end note
+}
+
+@enduml
+

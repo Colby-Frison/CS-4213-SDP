@@ -1,0 +1,40 @@
+# LaTeX compilation files
+*.aux
+*.lof
+*.log
+*.lot
+*.fls
+*.out
+*.toc
+*.fmt
+*.fot
+*.cb
+*.cb2
+*.bbl
+*.bcf
+*.blg
+*.run.xml
+*.fdb_latexmk
+*.synctex.gz
+
+# Common LaTeX temp dirs/files
+latexmkrc
+*.xdv
+
+# Ignore LaTeX build outputs in subdirectories (e.g., Assignments, Points, etc.)
+**/*.aux
+**/*.fdb_latexmk
+**/*.fls
+**/*.log
+**/*.out
+**/*.toc
+**/*.synctex.gz
+
+# Compiled class files
+build/*.class
+*.class
+.idea
+*.iml
+
+*/**/bin
+*/**/obj

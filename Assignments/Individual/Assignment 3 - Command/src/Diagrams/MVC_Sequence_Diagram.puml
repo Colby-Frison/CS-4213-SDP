@@ -1,0 +1,73 @@
+@startuml MVC_Sequence_Diagram
+!theme plain
+skinparam sequenceMessageAlign center
+skinparam shadowing false
+
+title Sequence Diagram - Create Note Interaction
+
+actor User
+participant "NoteEditorView" as View
+participant "NoteController" as Controller
+participant "NoteRepository" as Repository
+participant "Note" as Model
+
+User -> View: Click "New Note" button
+activate View
+
+View -> Controller: onSaveClicked()
+activate Controller
+
+Controller -> Controller: createNewNote()
+Controller -> Model: new Note()
+activate Model
+Model --> Controller: note instance
+deactivate Model
+
+Controller -> Repository: save(note)
+activate Repository
+Repository -> Repository: generateId()
+Repository -> Repository: setCreatedAt()
+Repository -> Repository: store(note)
+Repository --> Controller: note saved
+deactivate Repository
+
+Controller -> View: displayNote(note)
+View -> View: populateFields(note)
+View -> User: Show note editor with empty fields
+deactivate View
+
+User -> View: Enter title and content
+activate View
+User -> View: Click "Save" button
+
+View -> Controller: onSaveClicked()\nwith title and content
+activate Controller
+
+Controller -> Controller: validateInput(title, content)
+alt Validation successful
+    Controller -> Model: setTitle(title)
+    activate Model
+    Model --> Controller: title set
+    deactivate Model
+    
+    Controller -> Model: setContent(content)
+    activate Model
+    Model -> Model: updateLastModified()
+    Model --> Controller: content set
+    deactivate Model
+    
+    Controller -> Repository: save(note)
+    activate Repository
+    Repository -> Repository: update(note)
+    Repository --> Controller: note updated
+    deactivate Repository
+    
+    Controller -> View: showSuccessMessage()
+    View -> User: Display "Note saved successfully"
+else Validation failed
+    Controller -> View: showErrorMessage("Invalid input")
+    View -> User: Display error message
+end
+
+deactivate Controller
+deactivate View

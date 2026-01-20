@@ -1,0 +1,173 @@
+@startuml MVC_Class_Diagram
+!theme plain
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+
+title MVC Class Diagram - Note-taking Application
+
+package "Model" {
+    class Note {
+        -String id
+        -String title
+        -String content
+        -Date createdAt
+        -Date lastModified
+        -List<Tag> tags
+        +getId(): String
+        +getTitle(): String
+        +setTitle(String): void
+        +getContent(): String
+        +setContent(String): void
+        +getCreatedAt(): Date
+        +getLastModified(): Date
+        +updateLastModified(): void
+        +addTag(Tag): void
+        +removeTag(Tag): void
+        +getTags(): List<Tag>
+    }
+    
+    class Notebook {
+        -String id
+        -String name
+        -List<Note> notes
+        +getId(): String
+        +getName(): String
+        +setName(String): void
+        +addNote(Note): void
+        +removeNote(Note): void
+        +getNotes(): List<Note>
+        +getNoteCount(): int
+    }
+    
+    class Tag {
+        -String id
+        -String name
+        -String color
+        +getId(): String
+        +getName(): String
+        +setName(String): void
+        +getColor(): String
+        +setColor(String): void
+    }
+    
+    class NoteRepository {
+        -List<Note> notes
+        +save(Note): void
+        +findById(String): Note
+        +findAll(): List<Note>
+        +delete(String): void
+        +search(String): List<Note>
+        +findByTag(Tag): List<Note>
+    }
+    
+    Note "1..*" -- "0..*" Tag : tagged with
+    Notebook "1" -- "0..*" Note : contains
+    NoteRepository "1" -- "*" Note : manages
+}
+
+package "View" {
+    class NoteListView {
+        -List<Note> displayedNotes
+        +displayNotes(List<Note>): void
+        +showNoteDetails(Note): void
+        +refresh(): void
+        +onNoteSelected(Note): void
+    }
+    
+    class NoteEditorView {
+        -Note currentNote
+        -String titleField
+        -String contentField
+        +displayNote(Note): void
+        +getTitleInput(): String
+        +getContentInput(): String
+        +showSaveButton(): void
+        +showCancelButton(): void
+        +onSaveClicked(): void
+        +onCancelClicked(): void
+    }
+    
+    class SearchView {
+        -String searchQuery
+        +displaySearchBox(): void
+        +getSearchQuery(): String
+        +displayResults(List<Note>): void
+        +onSearchSubmitted(): void
+    }
+    
+    class CategoryView {
+        -List<Tag> tags
+        +displayTags(List<Tag>): void
+        +showCreateTagForm(): void
+        +onTagSelected(Tag): void
+        +onCreateTagClicked(): void
+    }
+}
+
+package "Controller" {
+    class NoteController {
+        -NoteRepository repository
+        -NoteListView listView
+        -NoteEditorView editorView
+        +createNote(): void
+        +editNote(String): void
+        +saveNote(Note): void
+        +deleteNote(String): void
+        +loadAllNotes(): void
+        +handleNoteSelected(Note): void
+    }
+    
+    class SearchController {
+        -NoteRepository repository
+        -SearchView searchView
+        +performSearch(String): void
+        +handleSearchQuery(String): void
+        +clearSearch(): void
+    }
+    
+    class CategoryController {
+        -NoteRepository repository
+        -CategoryView categoryView
+        +createTag(String, String): void
+        +addTagToNote(Note, Tag): void
+        +removeTagFromNote(Note, Tag): void
+        +loadAllTags(): void
+    }
+}
+
+' Relationships
+NoteController ..> NoteRepository : uses
+NoteController ..> NoteListView : updates
+NoteController ..> NoteEditorView : updates
+
+SearchController ..> NoteRepository : uses
+SearchController ..> SearchView : updates
+
+CategoryController ..> NoteRepository : uses
+CategoryController ..> CategoryView : updates
+
+NoteListView ..> NoteController : notifies
+NoteEditorView ..> NoteController : notifies
+SearchView ..> SearchController : notifies
+CategoryView ..> CategoryController : notifies
+
+note right of Note
+    **Model Component**
+    Contains business data
+    and domain logic
+end note
+
+note right of NoteListView
+    **View Component**
+    Handles user interface
+    and display logic
+end note
+
+note right of NoteController
+    **Controller Component**
+    Coordinates between
+    Model and View
+end note
+
+@enduml
+

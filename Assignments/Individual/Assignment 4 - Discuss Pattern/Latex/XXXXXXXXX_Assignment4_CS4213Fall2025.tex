@@ -1,0 +1,221 @@
+\documentclass[12pt, letterpaper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[margin=1in]{geometry}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{fancyhdr}
+\usepackage{lastpage}
+\usepackage{titlesec}
+\usepackage{float}
+\usepackage{listings}
+\usepackage{color}
+\usepackage{indentfirst}
+
+% --- Configuration for Mermaid/Code Blocks ---
+\definecolor{lightgray}{rgb}{0.95, 0.95, 0.95}
+\lstset{
+    backgroundcolor=\color{lightgray},
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    frame=single,
+    columns=fullflexible,
+    keepspaces=true,
+    showstringspaces=false
+}
+
+% --- Header and Footer Setup ---
+\pagestyle{fancy}
+\fancyhf{} % Clear all headers and footers
+
+% Header
+\fancyhead[L]{\textbf{CS4213: Design Patterns}}
+\fancyhead[R]{\textbf{Assignment 4}}
+
+% Footer
+\fancyfoot[L]{Colby Frison \\ XXXXXXXXX} % Left side: Name and OUID
+\fancyfoot[R]{Page \thepage\ of \pageref*{LastPage}} % Right side: Page X of Total
+
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0.4pt}
+
+% --- Title Page Setup ---
+\title{
+    \vspace{2in}
+    \textbf{\Huge Assignment 4: Pattern for Maintenance} \\
+    \vspace{0.2in}
+    \Large M11-Discuss Patterns for Maintenance     \\
+    \vspace{.5in}
+    \textbf{CS4213 Design Patterns} \\
+    \vspace{0.4in}
+}
+
+\author{\textbf{Semester:} Fall 2025 \\ \textbf{Name:} Colby Frison \\ \textbf{OUID:} XXXXXXXXX \vspace{0.1in} \\ \textbf{Due:} 12/5/2025}
+\date{} % Suppress the date
+
+% --- Document Content ---
+\begin{document}
+
+% Title Page
+\maketitle
+\thispagestyle{empty} % No header/footer on title page
+\newpage
+
+% Table of Contents
+\tableofcontents
+\thispagestyle{empty}
+\newpage
+
+% Start Page Numbering
+\setcounter{page}{1}
+
+% --- Task A ---
+\section{Task A: Select a Design to Refactor}
+
+\subsection{1. System Overview: SmartWrite}
+\noindent\textbf{SmartWrite} is an electron-based application I designed and implemented with a group last semester with the purpose to digitize and organize notes. It combines a local backend (Electron Main Process) for system access with a web-based frontend (Renderer Process) for the user interface.
+
+\noindent\textbf{Purpose:} To provide a seamless interface for viewing PDFs, editing Markdown notes, and interacting with an AI assistant for content analysis, all within a unified local environment.
+
+\subsection{2. Current Design Flaws}
+Although the application functions correctly, I identified several design choices in my original implementation that hinder maintenance and scalability:
+
+\begin{enumerate}
+    \item \textbf{High Coupling (Flexibility Issue):}
+    \begin{itemize}
+        \item I designed the \texttt{FileTree} module to handle file selection logic, but it is tightly coupled to the \texttt{PDF} module. When a file is clicked, \texttt{FileTree} directly invokes \texttt{PDF.loadDocument()}. This makes it difficult for me to add new file viewers (e.g., for images or pure text) without modifying the \texttt{FileTree} class.
+        \item Modules often import each other directly rather than communicating through abstractions.
+    \end{itemize}
+
+    \item \textbf{God Object / Orchestration Complexity (Reuse Issue):}
+    \begin{itemize}
+        \item I also identified a "God Object" problem. The \texttt{FrontMain} (Frontend \texttt{main.js}) acts as a central orchestrator that manually initializes every module (\texttt{Chat}, \texttt{PDF}, \texttt{Settings}, etc.). This makes \texttt{FrontMain} a class that knows too much about the specific implementation of every feature, making it hard for me to reuse individual modules in other contexts without dragging in the entire initialization logic.
+    \end{itemize}
+
+    \item \textbf{Testability Issues:}
+    \begin{itemize}
+        \item \textbf{Global State dependencies:} In my review of the code, I found that most modules (like \texttt{Chat} and \texttt{Theme}) directly import a singleton \texttt{State} object. This global dependency makes unit testing difficult because the state persists between tests unless manually reset, and mocking the state requires complex module interception.
+        \item \textbf{DOM Coupling:} Business logic (e.g., parsing PDF text) is intertwined with UI manipulation (e.g., updating the DOM), making it impossible for me to test logic without a browser environment.
+    \end{itemize}
+\end{enumerate}
+
+\subsection{3. Original UML Class Diagram}
+The current design relies on direct relationships and a central orchestrator.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{Figs/Original_UML.pdf}
+\caption{Original UML Class Diagram}
+\end{figure}
+
+\newpage
+
+% --- Task B ---
+\section{Task B: Refactor for Flexibility and Reuse}
+
+\subsection{Refactoring 1: Mediator Pattern (Flexibility)}
+\noindent\textbf{Goal:} Decouple the \texttt{FileTree} from specific file viewers like \texttt{PDF}.
+
+\noindent\textbf{Description:} \\
+Currently, \texttt{FileTree} explicitly calls \texttt{PDF.loadDocument()} when a user selects a file. To decouple these components, I chose to implement the \textbf{AppMediator}.
+\begin{enumerate}
+    \item In this new design, the \texttt{FileTree} no longer imports \texttt{PDF}. Instead, it will notify the Mediator (e.g., \texttt{mediator.notify('fileSelected', file)}) when a user interacts with the UI.
+    \item The \texttt{AppMediator} holds references to \texttt{PDF}, \texttt{FileTree}, and other potential modules (like a future \texttt{MarkdownEditor}).
+    \item When the Mediator receives the \texttt{fileSelected} event, it checks the file extension and routes the request to the appropriate module (e.g., calling \texttt{PDF.loadDocument()} only if the file is a PDF).
+\end{enumerate}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{Figs/Mediator_Refactor.pdf}
+\caption{Updated UML: Mediator Pattern}
+\end{figure}
+
+\subsection{Refactoring 2: Facade Pattern (Reuse)}
+\noindent\textbf{Goal:} Consolidate native system interactions to promote code reuse and simplify the frontend.
+
+\noindent\textbf{Description:} \\
+My application relies heavily on Electron's IPC (Inter-Process Communication) via \texttt{window.electron} exposed by the preload script. Currently, raw IPC calls like \texttt{ipcRenderer.invoke('read-file', path)} are scattered across \texttt{PDF.js}, \texttt{FileTree.js}, and \texttt{Chat.js}.
+To address this, I designed a \textbf{NativeBridgeFacade}.
+\begin{enumerate}
+    \item This Facade provides a clean, simplified interface for all system operations: \texttt{readFile(path)}, \texttt{savePreferences(data)}, \texttt{fetchAIResponse(prompt)}.
+    \item The individual modules will depend on \texttt{NativeBridgeFacade} instead of the global Electron object.
+    \item This improves reuse: if I port the app to the web (removing Electron), I only need to replace \texttt{NativeBridgeFacade} with a \texttt{WebBridgeFacade}, without changing the business logic in \texttt{Chat} or \texttt{PDF}.
+\end{enumerate}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.7\textwidth]{Figs/Facade_Refactor.pdf}
+\caption{Updated UML: Facade Pattern}
+\end{figure}
+
+\subsection{Refactoring 3: Strategy Pattern (Design Needs)}
+\noindent\textbf{Goal:} Allow runtime switching between different AI models (e.g., OpenAI vs. Local LLM).
+
+\noindent\textbf{Description:} \\
+Currently, I hardcoded the interaction with a specific AI provider in the \texttt{Chat} module. I decided to extract this logic into an \textbf{AIModelStrategy} interface.
+\begin{enumerate}
+    \item I define an interface \texttt{AIModelStrategy} with a method \texttt{generateResponse(prompt)}.
+    \item I create concrete implementations: \texttt{OpenAIStrategy} (calls external API) and \texttt{LocalLLMStrategy} (calls local Python process or Ollama).
+    \item The \texttt{Chat} module will hold a reference to the current strategy and delegate the generation call. This allows the user to switch providers in Settings without rewriting \texttt{Chat.js}.
+\end{enumerate}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.7\textwidth]{Figs/Strategy_Refactor.pdf}
+\caption{Updated UML: Strategy Pattern}
+\end{figure}
+
+\newpage
+
+% --- Task C ---
+\section{Task C: Refactor for Testability + Tools}
+
+\subsection{1. Refactoring for Testability}
+
+\noindent\textbf{Refactoring A: Dependency Injection (DI)} \\
+Currently, modules like \texttt{Chat} import the global \texttt{State} singleton directly. This makes testing hard because state persists across tests.
+\begin{itemize}
+    \item \textbf{Change:} I modified \texttt{Chat} and \texttt{PDF} constructors to accept dependencies (\texttt{state}, \texttt{bridge}) as arguments.
+    \item \textbf{Benefit:} In unit tests, I can now inject a \texttt{MockState} or \texttt{MockBridge}. This ensures that a test for \texttt{Chat} doesn't accidentally fail because of unrelated data left over in the real \texttt{State} object.
+\end{itemize}
+
+\noindent\textbf{Refactoring B: Logic Isolation (Humble Object Pattern)} \\
+The \texttt{PDF} module mixes complex logic (text extraction, search algorithms) with DOM manipulation (rendering to Canvas).
+\begin{itemize}
+    \item \textbf{Change:} I extracted the pure logic into a \texttt{PDFProcessor} class (handles parsing, text analysis) and kept the UI code in \texttt{PDFViewer}.
+    \item \textbf{Benefit:} This allows me to write fast, headless unit tests for \texttt{PDFProcessor} using Jest/Node.js without needing a browser environment or complex DOM mocks.
+\end{itemize}
+
+\subsection{2. Tool Research: VS Code Built-in Refactoring Tools}
+
+\textbf{Key Features:}
+\begin{itemize}
+    \item \textbf{Rename Symbol (F2):} Automatically renames a variable, function, or class across the entire workspace. It uses the language server's Abstract Syntax Tree (AST) understanding to ensure it only updates the correct references, avoiding the dangers of a global "find and replace."
+    \item \textbf{Extract Function/Method:} Allows me to select a block of code and automatically extract it into a new function. The tool handles argument passing and return values, ensuring the logic remains identical while reducing method size and complexity.
+    \item \textbf{Move to File:} Helps in breaking down "God Classes" by safely moving classes or functions to new files and automatically updating all import statements across the project to point to the new location.
+\end{itemize}
+
+\newpage
+\noindent\textbf{Safe Refactoring with VS Code:} \\
+These tools ensure safety by performing \textbf{Automated AST Manipulation} rather than manual text editing.
+\begin{enumerate}
+    \item When decoupling the \texttt{FileTree}, I can use "Extract Method" to pull the file routing logic out of the click handler before moving it to the \texttt{AppMediator}.
+    \item Using "Rename Symbol" ensures that when I change internal class property names during the Facade implementation, I don't accidentally break obscure references in other files.
+    \item The "Find All References" feature allows me to confidently verify that no legacy code is still calling the old direct dependencies after I've introduced the Dependency Injection pattern.
+\end{enumerate}
+
+
+% --- Task D ---
+\section{Task D: Reflection on Refactoring Impact}
+
+\noindent\textbf{Summary:} \\
+\indent All of the refactorings on the code base had a significant impact on the system's functionality and maintainability. However, the \textbf{Mediator Pattern} had the \textbf{greatest impact} on the system's flexibility and reusability.
+
+\vspace{0.5cm}
+Prior to this change, the \texttt{FileTree} had to "know" about every possible file viewer in the system. If I wanted to add an Image Viewer, I would have to modify the \texttt{FileTree} code to say \texttt{if (file.ext == 'png') ImageViewer.load()}. This violation of the Open/Closed Principle meant that adding features required modifying existing, stable code, risking bugs in the file selection logic.
+
+By introducing the \texttt{AppMediator}, the \texttt{FileTree} became purely a "notifier". It says "someone clicked a file" and stops caring. The Mediator handles the complexity. This shifted the system from a brittle mesh of point-to-point connections to a clean, centralized event handling architecture.
+
+This experience changed my view of design improvement from "making code cleaner" to "making code \textbf{changeable}". The value wasn't just in the lines of code saved, but in the hours of future debugging saved by decoupling components.
+
+\end{document}

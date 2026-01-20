@@ -1,0 +1,87 @@
+@startuml Refactoring1_Flexibility
+!theme plain
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+
+title Refactoring 1: Extract Interface for Flexibility
+
+package "Before Refactoring" {
+    class NoteController {
+        -FileStorage storage
+        +saveNote(Note): void
+        +loadNote(String): Note
+    }
+    
+    class FileStorage {
+        +save(Note): void
+        +load(String): Note
+        +delete(String): void
+    }
+    
+    class DatabaseStorage {
+        +save(Note): void
+        +load(String): Note
+        +delete(String): void
+    }
+    
+    NoteController --> FileStorage : tight coupling
+    note right of NoteController
+        **Problem:**
+        Direct dependency on
+        concrete FileStorage
+        makes it hard to switch
+        to DatabaseStorage
+    end note
+}
+
+package "After Refactoring" {
+    interface IStorageRepository {
+        +save(Note): void
+        +load(String): Note
+        +delete(String): void
+        +findAll(): List<Note>
+    }
+    
+    class NoteController {
+        -IStorageRepository repository
+        +saveNote(Note): void
+        +loadNote(String): Note
+        +setRepository(IStorageRepository): void
+    }
+    
+    class FileStorage {
+        +save(Note): void
+        +load(String): Note
+        +delete(String): void
+        +findAll(): List<Note>
+    }
+    
+    class DatabaseStorage {
+        +save(Note): void
+        +load(String): Note
+        +delete(String): void
+        +findAll(): List<Note>
+    }
+    
+    class CloudStorage {
+        +save(Note): void
+        +load(String): Note
+        +delete(String): void
+        +findAll(): List<Note>
+    }
+    
+    IStorageRepository <|.. FileStorage
+    IStorageRepository <|.. DatabaseStorage
+    IStorageRepository <|.. CloudStorage
+    NoteController --> IStorageRepository : depends on interface
+    
+    note right of NoteController
+        **Solution:**
+        Depends on interface,
+        can easily switch
+        implementations
+    end note
+}
+
+@enduml
+
